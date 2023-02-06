@@ -1033,7 +1033,7 @@ class StreamSubscriber(_Subscriber):
 
 
     def _next_update(self, timeout):
-        if not self._first_update_seen:
+        if False and not self._first_update_seen:
             self._first_update_seen = True
             return self._get_updates_till_sync(timeout=timeout)
         else:
