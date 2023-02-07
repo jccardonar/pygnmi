@@ -908,8 +908,20 @@ class _Subscriber:
         def enqueue_updates():
             stub = gNMIStub(channel)
             subscription = stub.Subscribe(_client_stream, metadata=metadata)
-            for update in subscription:
-                self._updates.put(update)
+            # this loop doesnt stop even if we stop the telemetry strip, I am closing the gc channel
+            # but this raises a exception. Catching and ignore just that type
+            # Maybe there is a better way of cancelling without raising an exception, but I 
+            # do not know it
+            # see https://stackoverflow.com/questions/63413200/what-is-multithreadedrendezvous-in-grpc-and-how-to-parse-it
+            try:
+                for update in subscription:
+                    self._updates.put(update)
+            except grpc._channel._MultiThreadedRendezvous as e:
+                if e.code() == grpc.StatusCode.CANCELLED:
+                    pass
+                else:
+                    raise
+
 
         self._subscribe_thread = threading.Thread(target=enqueue_updates)
         self._subscribe_thread.start()
